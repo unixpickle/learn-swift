@@ -11,4 +11,21 @@ final class AutodiffTests: XCTestCase {
         sqDiff.backward(grad: Tensor(onesLike: x))
         XCTAssertEqual(xGrad!.data, [-2, 4, 12])
     }
+
+    func testMatrixVectorProduct() throws {
+        let x = Tensor(data: [1, 2, 3, 4, 5, 6], shape: [2, 3])
+        let y = Tensor(data: [-1, -3, 2], shape: [3, 1])
+        var xGrad: Tensor?
+        var yGrad: Tensor?
+        let xParam = x.onGrad { grad in xGrad = grad }
+        let yParam = y.onGrad { grad in yGrad = grad }
+        let product = matmul(xParam, yParam)
+        XCTAssertEqual(product.data, [-1, -7])
+        let outGrad = Tensor(onesLike: product)
+        product.backward(grad: outGrad)
+        XCTAssertEqual(xGrad!.data, [-1, -3, 2, -1, -3, 2])
+        XCTAssertEqual(xGrad!.shape, x.shape)
+        XCTAssertEqual(yGrad!.data, [5, 7, 9])
+        XCTAssertEqual(yGrad!.shape, y.shape)
+    }
 }

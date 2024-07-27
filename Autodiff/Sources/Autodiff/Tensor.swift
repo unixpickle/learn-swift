@@ -71,7 +71,10 @@ final class Tensor {
     }
 
     static func + (lhs: Tensor, rhs: Tensor) -> Tensor {
-        assert(lhs.shape == rhs.shape)
+        assert(
+            lhs.shape == rhs.shape,
+            "shape mismatch for + operator: lhs=\(lhs.shape) rhs=\(rhs.shape)"
+        )
         let newData = Array(zip(lhs.data, rhs.data).map({x in x.0 + x.1}))
         if !lhs.needsGrad && !rhs.needsGrad {
             return Tensor(data: newData, shape: lhs.shape)
@@ -86,7 +89,10 @@ final class Tensor {
     }
 
     static func * (lhs: Tensor, rhs: Tensor) -> Tensor {
-        assert(lhs.shape == rhs.shape)
+        assert(
+            lhs.shape == rhs.shape,
+            "shape mismatch for * operator: lhs=\(lhs.shape) rhs=\(rhs.shape)"
+        )
         let newData = Array(zip(lhs.data, rhs.data).map({x in x.0 * x.1}))
         if !lhs.needsGrad && !rhs.needsGrad {
             return Tensor(data: newData, shape: lhs.shape)
@@ -138,6 +144,10 @@ final class Tensor {
         return TensorBackwardHandle(addGrad: { [self] grad in
             assert(numBackwardHandles > 0)
             if let grad = grad {
+                assert(
+                    grad.shape == shape,
+                    "gradient shape \(grad.shape) must match tensor shape \(shape)"
+                )
                 if let cg = curGrad {
                     curGrad = cg + grad
                 } else {
