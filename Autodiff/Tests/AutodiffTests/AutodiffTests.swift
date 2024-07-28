@@ -28,4 +28,10 @@ final class AutodiffTests: XCTestCase {
         XCTAssertEqual(yGrad!.data, [5, 7, 9])
         XCTAssertEqual(yGrad!.shape, y.shape)
     }
+
+    func testSlice() throws {
+        let x = Tensor(data: [1, 2, 3, 4, 5, 6], shape: [3, 2])
+        XCTAssertEqual(x[1].data, [3, 4])
+        XCTAssertEqual(x[1..<3].data, [3, 4, 5, 6])
+    }
 }
