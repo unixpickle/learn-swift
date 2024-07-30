@@ -33,5 +33,12 @@ final class AutodiffTests: XCTestCase {
         let x = Tensor(data: [1, 2, 3, 4, 5, 6], shape: [3, 2])
         XCTAssertEqual(x[1].data, [3, 4])
         XCTAssertEqual(x[1..<3].data, [3, 4, 5, 6])
+        XCTAssertEqual(x[1...2].data, [3, 4, 5, 6])
+        XCTAssertEqual(x[1..<2].data, [3, 4])
+        XCTAssertEqual(x[(-2)..<(-1)].data, [3, 4])
+        XCTAssertEqual(x[(-2)...(-1)].data, [3, 4, 5, 6])
+        XCTAssertEqual(x[(-2)...].data, [3, 4, 5, 6])
+        XCTAssertEqual(x[...(-2)].data, [1, 2, 3, 4])
+        XCTAssertEqual(x[..<(-2)].data, [1, 2])
     }
 }
