@@ -13,6 +13,10 @@ final class Tensor {
     private var numBackwardHandles: Int = 0
 
     init(data: [Float], shape: [Int], backwardImpl: ((Tensor) -> Void)? = nil) {
+        assert(
+            data.count == shape.product(),
+            "data of size \(data.count) incompatible with shape \(shape)"
+        )
         self.data = data
         self.shape = shape
         self.backwardImpl = backwardImpl
