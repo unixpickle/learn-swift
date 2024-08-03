@@ -1,6 +1,3 @@
-// The Swift Programming Language
-// https://docs.swift.org/swift-book
-
 final class Tensor {
     let data: [Float]
     let shape: [Int]
@@ -31,9 +28,21 @@ final class Tensor {
         self.init(constant: 1, like: onesLike)
     }
 
-    init(constant: Float, like: Tensor) {
-        self.data = Array(repeating: constant, count: like.data.count)
-        self.shape = like.shape
+    convenience init(zeros shape: [Int]) {
+        self.init(constant: 0, shape: shape)
+    }
+
+    convenience init(ones shape: [Int]) {
+        self.init(constant: 1, shape: shape)
+    }
+
+    convenience init(constant: Float, like: Tensor) {
+        self.init(constant: constant, shape: like.shape)
+    }
+
+    init(constant: Float, shape: [Int]) {
+        self.data = Array(repeating: constant, count: shape.product())
+        self.shape = shape
         self.needsGrad = false
     }
 

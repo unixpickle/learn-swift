@@ -66,4 +66,44 @@ final class AutodiffTests: XCTestCase {
         XCTAssertEqual(yGrad!.shape, y.shape)
         XCTAssertEqual(yGrad!.data, [0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3])
     }
+
+    func testElemwise() throws {
+        func testF(input: [Float], output: [Float], grad: [Float], _ op: (Tensor) -> Tensor) throws {
+            var actualGrad: Tensor?
+            let tensorIn = Tensor(data: input, shape: [input.count]) { g in
+                actualGrad = g
+            }
+            let actualOut = op(tensorIn)
+            try assertClose(actualOut, Tensor(data: output, shape: [output.count]))
+            actualOut.backward(grad: Tensor(onesLike: actualOut))
+            try assertClose(actualGrad!, Tensor(data: grad, shape: [output.count]))
+        }
+
+        try testF(
+            input: [-1, -2, -3, 1, 2, 3],
+            output: [1, 4, 9, 1, 4, 9],
+            grad: [-2, -4, -6, 2, 4, 6]
+        ) { $0.pow(2) }
+        try testF(
+            input: [0.01, 1, 2, 3],
+            output: [0.1, 1.0, sqrt(2.0), sqrt(3.0)],
+            grad: [5.0, 0.5, 0.3535533845424652, 0.28867512941360474]
+        ) { $0.sqrt() }
+        try testF(
+            input: [-100, -2, 0, 1, 2, 3, 100],
+            output: [-0.0, -0.04540228843688965, 0.0, 0.8411920070648193, 1.9545977115631104, 2.9963626861572266, 100.0],
+            grad: [0.0, -0.08609922230243683, 0.5, 1.0829640626907349, 1.0860992670059204, 1.0115842819213867, 1.0]
+        ) { $0.gelu() }
+    }
+}
+
+func assertClose(_ x: Tensor, _ y: Tensor, atol: Float = 1e-4, rtol: Float = 1e-4) throws {
+    XCTAssertEqual(x.shape, y.shape)
+    var allGood = true
+    for (a, b) in zip(x.data, y.data) {
+        if abs(a-b)>atol && (b == 0 || abs(a/b-1) > rtol) {
+            allGood = false
+        }
+    }
+    XCTAssert(allGood, "tensors \(x.data) and \(y.data) are not equal")
 }
