@@ -50,7 +50,7 @@ final class Tensor {
         return Tensor(data: data, shape: shape)
     }
 
-    func onGrad(action: @escaping (Tensor) -> Void) -> Tensor {
+    func onGrad(_ action: @escaping (Tensor) -> Void) -> Tensor {
         if !needsGrad {
             return Tensor(data: data, shape: shape, backwardImpl: action)
         }
@@ -58,6 +58,18 @@ final class Tensor {
         return Tensor(data: data, shape: shape) { grad in 
             action(grad)
             handle.backward(grad: grad)
+        }
+    }
+
+    func reshape(_ newShape: [Int]) -> Tensor {
+        assert(shape.product() == newShape.product())
+        if !needsGrad {
+            return Tensor(data: data, shape: newShape)
+        } else {
+            let handle = self.saveForBackward()
+            return Tensor(data: data, shape: newShape) { grad in
+                handle.backward(grad: grad.reshape(self.shape))
+            }
         }
     }
 

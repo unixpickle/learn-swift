@@ -6,7 +6,7 @@ final class AutodiffTests: XCTestCase {
         let x = Tensor(data: [1.0, 2.0, 3.0], shape: [3])
         let y = Tensor(data: [2.0, 0.0, -3.0], shape: [3])
         var xGrad: Tensor?
-        let diff = x.onGrad(action: {grad in xGrad = grad}) - y
+        let diff = x.onGrad({grad in xGrad = grad}) - y
         let sqDiff = diff * diff
         sqDiff.backward(grad: Tensor(onesLike: x))
         XCTAssertEqual(xGrad!.data, [-2, 4, 12])
@@ -94,6 +94,62 @@ final class AutodiffTests: XCTestCase {
             output: [-0.0, -0.04540228843688965, 0.0, 0.8411920070648193, 1.9545977115631104, 2.9963626861572266, 100.0],
             grad: [0.0, -0.08609922230243683, 0.5, 1.0829640626907349, 1.0860992670059204, 1.0115842819213867, 1.0]
         ) { $0.gelu() }
+    }
+
+    func testSum() throws {
+        let input = Tensor(data: [1, 2, 3, 4, 5, 6, 7, 8, 9], shape: [3, 3])
+        var gradA: Tensor?
+        let sumA = input.onGrad({ g in gradA = g }).sum(axis: 1)
+        XCTAssertEqual(sumA.data, [6, 15, 24])
+        sumA.backward(grad: Tensor(data: [-1, -2, -3], shape: [3]))
+        XCTAssertEqual(gradA!.data, [-1, -1, -1, -2, -2, -2, -3, -3, -3])
+
+        var gradB: Tensor?
+        let sumB = input.onGrad({ g in gradB = g }).sum(axis: 0)
+        XCTAssertEqual(sumB.data, [12, 15, 18])
+        sumB.backward(grad: Tensor(data: [-1, -2, -3], shape: [3]))
+        XCTAssertEqual(gradB!.data, [-1, -2, -3, -1, -2, -3, -1, -2, -3])
+
+        let input1 = Tensor(data: [1, 2, 3, 4, 5, 6, 7, 8], shape: [2, 2, 2])
+
+        var gradC: Tensor?
+        let sumC = input1.onGrad({ g in gradC = g }).sum(axis: 1)
+        XCTAssertEqual(sumC.data, Array([1+3, 2+4, 5+7, 6+8].map { Float($0) }))
+        sumC.backward(grad: Tensor(data: [-1, -2, -3, -4], shape: [2, 2]))
+        XCTAssertEqual(gradC!.data, [-1, -2, -1, -2, -3, -4, -3, -4])
+
+        var gradD: Tensor?
+        let sumD = input1.onGrad({ g in gradD = g }).sum()
+        XCTAssertEqual(sumD.data, [input1.data.sum()])
+        sumD.backward(grad: Tensor(data: [-1], shape: []))
+        XCTAssertEqual(gradD!.data, Array(repeating: Float(-1), count: 8))
+    }
+
+    func testMinMax() throws {
+        let input = Tensor(data: [1, 10, 2, 7, 8, 9, 6, 4, 5], shape: [3, 3])
+        var gradA: Tensor?
+        let maxA = input.onGrad({ g in gradA = g }).max(axis: 1)
+        XCTAssertEqual(maxA.data, [10, 9, 6])
+        maxA.backward(grad: Tensor(data: [-1, -2, -3], shape: [3]))
+        XCTAssertEqual(gradA!.data, [0, -1, 0, 0, 0, -2, -3, 0, 0])
+
+        var gradB: Tensor?
+        let maxB = input.onGrad({ g in gradB = g }).max(axis: 0)
+        XCTAssertEqual(maxB.data, [7, 10, 9])
+        maxB.backward(grad: Tensor(data: [-1, -2, -3], shape: [3]))
+        XCTAssertEqual(gradB!.data, [0, -2, 0, -1, 0, -3, 0, 0, 0])
+
+        var gradC: Tensor?
+        let minC = input.onGrad({ g in gradC = g }).min(axis: 0)
+        XCTAssertEqual(minC.data, [1, 4, 2])
+        minC.backward(grad: Tensor(data: [-1, -2, -3], shape: [3]))
+        XCTAssertEqual(gradC!.data, [-1, 0, -3, 0, 0, 0, 0, -2, 0])
+
+        var gradD: Tensor?
+        let maxD = input.onGrad({ g in gradD = g }).max()
+        XCTAssertEqual(maxD.data, [10])
+        maxD.backward(grad: Tensor(data: [-1], shape: []))
+        XCTAssertEqual(gradD!.data, [0, -1, 0, 0, 0, 0, 0, 0, 0])
     }
 }
 
