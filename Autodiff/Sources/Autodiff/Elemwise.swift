@@ -42,6 +42,10 @@ extension Tensor {
         elemwise(Foundation.exp, fgrad: Foundation.exp)
     }
 
+    func log() -> Tensor {
+        elemwise(Foundation.log, fgrad: { 1 / $0 })
+    }
+
     func sigmoid() -> Tensor {
         return elemwise(safeSigmoid) { x in
             let s = safeSigmoid(x)

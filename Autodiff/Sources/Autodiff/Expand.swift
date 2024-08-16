@@ -1,5 +1,9 @@
 extension Tensor {
 
+    func expand(as asTensor: Tensor) -> Tensor {
+        expand(shape: asTensor.shape)
+    }
+
     func expand(shape newShape: [Int]) -> Tensor {
         assert(
             newShape.count >= shape.count,
