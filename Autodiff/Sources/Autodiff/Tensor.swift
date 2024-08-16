@@ -62,6 +62,9 @@ final class Tensor {
     }
 
     func reshape(_ newShape: [Int]) -> Tensor {
+        if shape == newShape {
+            return self
+        }
         assert(shape.product() == newShape.product())
         if !needsGrad {
             return Tensor(data: data, shape: newShape)

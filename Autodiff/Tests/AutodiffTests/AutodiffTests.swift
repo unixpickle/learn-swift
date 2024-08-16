@@ -123,6 +123,11 @@ final class AutodiffTests: XCTestCase {
         XCTAssertEqual(sumD.data, [input1.data.sum()])
         sumD.backward(grad: Tensor(data: [-1], shape: []))
         XCTAssertEqual(gradD!.data, Array(repeating: Float(-1), count: 8))
+
+        XCTAssertEqual(input1.sum(keepdims: true).shape, [1, 1, 1])
+        XCTAssertEqual(input1.sum(axis: 0, keepdims: true).shape, [1, 2, 2])
+        XCTAssertEqual(input1.sum(axis: 1, keepdims: true).shape, [2, 1, 2])
+        XCTAssertEqual(input1.sum(axis: 2, keepdims: true).shape, [2, 2, 1])
     }
 
     func testMinMax() throws {
@@ -150,6 +155,27 @@ final class AutodiffTests: XCTestCase {
         XCTAssertEqual(maxD.data, [10])
         maxD.backward(grad: Tensor(data: [-1], shape: []))
         XCTAssertEqual(gradD!.data, [0, -1, 0, 0, 0, 0, 0, 0, 0])
+
+        XCTAssertEqual(input.max(keepdims: true).shape, [1, 1])
+        XCTAssertEqual(input.max(axis: 0, keepdims: true).shape, [1, 3])
+        XCTAssertEqual(input.max(axis: 1, keepdims: true).shape, [3, 1])
+    }
+
+    func testExpandAndRepeat() throws {
+        let t1 = Tensor(data: [1, 2, 3, 4], shape: [2, 2])
+        XCTAssertEqual(t1.reshape([1, 2, 1, 2]).expand(shape: [3, 7, 2, 5, 2]).shape, [3, 7, 2, 5, 2])
+
+        let t2 = Tensor(data: [1, 2, 3, 4, 5, 6], shape: [1, 2, 1, 3, 1])
+        XCTAssertEqual(t2.repeating(axis: 0, count: 2).data, t2.data + t2.data)
+        XCTAssertEqual(t2.repeating(axis: 1, count: 2).data, t2.data + t2.data)
+        XCTAssertEqual(t2.repeating(axis: 2, count: 2).data, [1, 2, 3, 1, 2, 3, 4, 5, 6, 4, 5, 6])
+        XCTAssertEqual(t2.repeating(axis: 3, count: 2).data, [1, 2, 3, 1, 2, 3, 4, 5, 6, 4, 5, 6])
+        XCTAssertEqual(t2.repeating(axis: 4, count: 2).data, [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6])
+
+        var grad: Tensor?
+        let repeated = t2.onGrad({ g in grad = g }).repeating(axis: 2, count: 2)
+        repeated.backward(grad: Tensor(data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], shape: [1, 2, 2, 3, 1]))
+        XCTAssertEqual(grad!.data, [5, 7, 9, 17, 19, 21])
     }
 }
 

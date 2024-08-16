@@ -1,5 +1,5 @@
 extension Tensor {
-    func sum(axis: Int? = nil) -> Tensor {
+    func sum(axis: Int? = nil, keepdims: Bool = false) -> Tensor {
         if let axis = axis {
             let trueAxis = (axis < 0 ? axis + shape.count : axis)
             assert(
@@ -20,7 +20,7 @@ extension Tensor {
                     newData[i*innerCount + j] = sum
                 }
             }
-            let newShape = Array(shape[..<trueAxis] + shape[(trueAxis+1)...])
+            let newShape = Array(shape[..<trueAxis] + (keepdims ? [1] : []) + shape[(trueAxis+1)...])
             if !needsGrad {
                 return Tensor(data: newData, shape: newShape)
             } else {
@@ -41,11 +41,12 @@ extension Tensor {
             }
         } else {
             let newData = [self.data.sum()]
+            let newShape = (keepdims ? Array(repeating: 1, count: shape.count) : [])
             if !needsGrad {
-                return Tensor(data: newData, shape: [])
+                return Tensor(data: newData, shape: newShape)
             } else {
                 let handle = self.saveForBackward()
-                return Tensor(data: newData, shape: []) { grad in
+                return Tensor(data: newData, shape: newShape) { grad in
                     assert(grad.data.count == 1)
                     handle.backward(
                         grad: Tensor(
@@ -58,15 +59,15 @@ extension Tensor {
         }
     }
 
-    func min(axis: Int? = nil) -> Tensor {
-        return maxOrMin(isMax: false, axis: axis)
+    func min(axis: Int? = nil, keepdims: Bool = false) -> Tensor {
+        return maxOrMin(isMax: false, axis: axis, keepdims: keepdims)
     }
 
-    func max(axis: Int? = nil) -> Tensor {
-        return maxOrMin(isMax: true, axis: axis)
+    func max(axis: Int? = nil, keepdims: Bool = false) -> Tensor {
+        return maxOrMin(isMax: true, axis: axis, keepdims: keepdims)
     }
 
-    private func maxOrMin(isMax: Bool, axis: Int? = nil) -> Tensor {
+    private func maxOrMin(isMax: Bool, axis: Int?, keepdims: Bool) -> Tensor {
         if let axis = axis {
             let trueAxis = (axis < 0 ? axis + shape.count : axis)
             assert(
@@ -95,7 +96,7 @@ extension Tensor {
                     indices[i*innerCount + j] = batchOffset + chosenIndex*innerCount + j
                 }
             }
-            let newShape = Array(shape[..<trueAxis] + shape[(trueAxis+1)...])
+            let newShape = Array(shape[..<trueAxis] + (keepdims ? [1] : []) + shape[(trueAxis+1)...])
             if !needsGrad {
                 return Tensor(data: newData, shape: newShape)
             } else {
@@ -105,7 +106,12 @@ extension Tensor {
                 }
             }
         } else {
-            return self.reshape([shape.product()]).maxOrMin(isMax: isMax, axis: 0)
+            let out = self.reshape([shape.product()]).maxOrMin(isMax: isMax, axis: 0, keepdims: false)
+            if keepdims {
+                return out.reshape(Array(repeating: 1, count: shape.count))
+            } else {
+                return out
+            }
         }
     }   
 }
