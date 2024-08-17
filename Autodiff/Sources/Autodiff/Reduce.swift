@@ -20,23 +20,16 @@ extension Tensor {
                     newData[i*innerCount + j] = sum
                 }
             }
+            let keepdimShape = Array(shape[..<trueAxis] + [1] + shape[(trueAxis+1)...])
             let newShape = Array(shape[..<trueAxis] + (keepdims ? [1] : []) + shape[(trueAxis+1)...])
             if !needsGrad {
                 return Tensor(data: newData, shape: newShape)
             } else {
                 let handle = self.saveForBackward()
                 return Tensor(data: newData, shape: newShape) { grad in
-                    var repeatedGrad = Array(repeating: Float(0), count: self.data.count)
-                    for i in 0..<outerCount {
-                        let batchOffset = i*reduceCount*innerCount
-                        for j in 0..<innerCount {
-                            let src = grad.data[i*innerCount + j]
-                            for k in 0..<reduceCount {
-                                repeatedGrad[batchOffset + k*innerCount + j] = src
-                            }
-                        }
-                    }
-                    handle.backward(grad: Tensor(data: repeatedGrad, shape: self.shape))
+                    handle.backward(
+                        grad: grad.reshape(keepdimShape).repeating(axis: trueAxis, count: reduceCount)
+                    )
                 }
             }
         } else {
@@ -47,13 +40,7 @@ extension Tensor {
             } else {
                 let handle = self.saveForBackward()
                 return Tensor(data: newData, shape: newShape) { grad in
-                    assert(grad.data.count == 1)
-                    handle.backward(
-                        grad: Tensor(
-                            data: Array(repeating: grad.data[0], count: self.data.count),
-                            shape: self.shape
-                        )
-                    )
+                    handle.backward(grad: grad.expand(as: self))
                 }
             }
         }

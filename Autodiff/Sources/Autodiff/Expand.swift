@@ -23,6 +23,9 @@ extension Tensor {
             }
         }
         if newShape.count > shape.count {
+            if result.shape.isEmpty {
+                result = result.reshape([1])
+            }
             let repeats = newShape[..<(newShape.count - shape.count)].product()
             result = result.repeating(axis: 0, count: repeats)
         }

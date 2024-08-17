@@ -54,6 +54,14 @@ final class AutodiffTests: XCTestCase {
         XCTAssertEqual(y[1...2, ..., 2...3].data, [7, 8, 11, 12])
         XCTAssertEqual(y[0...2, ..., 2...3].data, [3, 4, 7, 8, 11, 12])
         XCTAssertEqual(y[0...2, 0..<1, 2...3].data, [3, 4, 7, 8, 11, 12])
+        XCTAssertEqual(y[FullRange(dims: 3), NewAxis()].data, y.data)
+        XCTAssertEqual(y[FullRange(dims: 3), NewAxis()].shape, [3, 1, 4, 1])
+        XCTAssertEqual(y[FullRange(dims: 2), NewAxis()].data, y.data)
+        XCTAssertEqual(y[FullRange(dims: 2), NewAxis()].shape, [3, 1, 1, 4])
+        XCTAssertEqual(y[FullRange(dims: 1), NewAxis()].data, y.data)
+        XCTAssertEqual(y[FullRange(dims: 1), NewAxis()].shape, [3, 1, 1, 4])
+        XCTAssertEqual(y[NewAxis()].data, y.data)
+        XCTAssertEqual(y[NewAxis()].shape, [1, 3, 1, 4])
 
         var yGrad: Tensor?
         let yParam = y.onGrad { grad in yGrad = grad }

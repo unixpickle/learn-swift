@@ -70,10 +70,30 @@ extension ClosedRange<Int>: TensorIndex {
 }
 
 struct FullRange: TensorIndex {
-    var minTensorSliceDims: Int { 1 }
+    let dims: Int
+
+    init(dims: Int = 1) {
+        self.dims = dims
+    }
+
+    var minTensorSliceDims: Int { dims }
 
     func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
         return (allIndices(forShape: inShape), inShape)
+    }
+}
+
+struct NewAxis: TensorIndex {
+    let count: Int
+
+    init(count: Int = 1) {
+        self.count = count
+    }
+
+    var minTensorSliceDims: Int { 0 }
+
+    func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
+        return (allIndices(forShape: inShape), Array(repeating: 1, count: count) + inShape)
     }
 }
 
