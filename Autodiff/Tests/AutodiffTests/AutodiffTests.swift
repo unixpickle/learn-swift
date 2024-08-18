@@ -202,6 +202,36 @@ final class AutodiffTests: XCTestCase {
         axis1Out.backward(grad: outGrad)
         try assertClose(axis1Grad!, Tensor(data: [0.9544176459312439, 1.545107364654541, -1.6874706745147705, -1.7957807779312134, 0.9837263822555542, 1.7054452896118164, 0.22224761545658112, -1.289053201675415, 0.006856732070446014, -0.645496129989624, -0.17693884670734406, 1.6333123445510864, 0.5340267419815063, -2.147022247314453, 0.156622052192688], shape: [3, 5]))
     }
+
+    func testConcatInner() throws {
+        let x = Tensor(data: [1, 2, 3, 4, 5, 6], shape: [2, 3])
+        let y = Tensor(data: [7, 8, 9, 10], shape: [2, 2])
+        var xGrad: Tensor?
+        var yGrad: Tensor?
+        let xWithGrad = x.onGrad({g in xGrad = g})
+        let yWithGrad = y.onGrad({g in yGrad = g})
+        let combined = Tensor(concat: [xWithGrad, yWithGrad], axis: 1)
+        XCTAssertEqual(combined.shape, [2, 5])
+        XCTAssertEqual(combined.data, [1, 2, 3, 7, 8, 4, 5, 6, 9, 10])
+        combined.backward(grad: Tensor(data: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], shape: [2, 5]))
+        XCTAssertEqual(xGrad!.data, [1, 2, 3, 6, 7, 8])
+        XCTAssertEqual(yGrad!.data, [4, 5, 9, 10])
+    }
+
+    func testConcatOuter() throws {
+        let x = Tensor(data: [1, 2, 3, 4, 5, 6], shape: [2, 3])
+        let y = Tensor(data: [7, 8, 9], shape: [1, 3])
+        var xGrad: Tensor?
+        var yGrad: Tensor?
+        let xWithGrad = x.onGrad({g in xGrad = g})
+        let yWithGrad = y.onGrad({g in yGrad = g})
+        let combined = Tensor(concat: [xWithGrad, yWithGrad], axis: 0)
+        XCTAssertEqual(combined.shape, [3, 3])
+        XCTAssertEqual(combined.data, [1, 2, 3, 4, 5, 6, 7, 8, 9])
+        combined.backward(grad: Tensor(data: [1, 2, 3, 4, 5, 6, 7, 8, 9], shape: [3, 3]))
+        XCTAssertEqual(xGrad!.data, [1, 2, 3, 4, 5, 6])
+        XCTAssertEqual(yGrad!.data, [7, 8, 9])
+    }
 }
 
 func assertClose(_ x: Tensor, _ y: Tensor, atol: Float = 1e-4, rtol: Float = 1e-4) throws {
