@@ -10,14 +10,27 @@ let package = Package(
         .library(
             name: "Autodiff",
             targets: ["Autodiff"]),
+        .library(
+            name: "MNIST",
+            targets: ["MNIST"]),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/1024jp/GzipSwift", "6.0.0" ..< "6.1.0"),
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.9.0"),
+        .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0" ..< "4.0.0"),
     ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "Autodiff"),
         .testTarget(
             name: "AutodiffTests",
             dependencies: ["Autodiff"]),
+        .target(
+            name: "MNIST",
+            dependencies: [
+                .product(name: "AsyncHTTPClient", package: "async-http-client"),
+                .product(name: "Gzip", package: "GzipSwift"),
+                .product(name: "Crypto", package: "swift-crypto"),
+            ]),
     ]
 )
