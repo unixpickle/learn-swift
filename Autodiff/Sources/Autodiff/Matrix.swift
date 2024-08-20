@@ -19,9 +19,14 @@ extension Tensor {
             }
         }
     }
+
+    static func &* (lhs: Tensor, rhs: Tensor) -> Tensor {
+        return tensorMatmul(lhs, rhs)
+    }
+
 }
 
-func matmul(_ lhs: Tensor, _ rhs: Tensor) -> Tensor {
+func tensorMatmul(_ lhs: Tensor, _ rhs: Tensor) -> Tensor {
     assert(
         lhs.shape.count == 2 && rhs.shape.count == 2,
         "matrices must be two-dimensional: lhs.shape=\(lhs.shape) rhs.shape=\(rhs.shape)"
@@ -49,8 +54,8 @@ func matmul(_ lhs: Tensor, _ rhs: Tensor) -> Tensor {
         let lhsHandle = lhs.saveForBackward()
         let rhsHandle = rhs.saveForBackward()
         return Tensor(data: data, shape: shape) { grad in
-            lhsHandle.backward(grad: matmul(grad, rhs.noGrad().transpose()))
-            rhsHandle.backward(grad: matmul(lhs.noGrad().transpose(), grad))
+            lhsHandle.backward(grad: tensorMatmul(grad, rhs.noGrad().transpose()))
+            rhsHandle.backward(grad: tensorMatmul(lhs.noGrad().transpose(), grad))
         }
     }
 }

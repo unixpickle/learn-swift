@@ -19,7 +19,7 @@ final class AutodiffTests: XCTestCase {
         var yGrad: Tensor?
         let xParam = x.onGrad { grad in xGrad = grad }
         let yParam = y.onGrad { grad in yGrad = grad }
-        let product = matmul(xParam, yParam)
+        let product = xParam &* yParam
         XCTAssertEqual(product.data, [-1, -7])
         let outGrad = Tensor(onesLike: product)
         product.backward(grad: outGrad)
@@ -231,6 +231,11 @@ final class AutodiffTests: XCTestCase {
         combined.backward(grad: Tensor(data: [1, 2, 3, 4, 5, 6, 7, 8, 9], shape: [3, 3]))
         XCTAssertEqual(xGrad!.data, [1, 2, 3, 4, 5, 6])
         XCTAssertEqual(yGrad!.data, [7, 8, 9])
+    }
+
+    func testOneHot() throws {
+        XCTAssertEqual(Tensor(oneHot: 3, count: 5).data, [0, 0, 0, 1, 0])
+        XCTAssertEqual(Tensor(oneHot: [3, 1], count: 5).data, [0, 0, 0, 1, 0, 0, 1, 0, 0, 0])
     }
 }
 
