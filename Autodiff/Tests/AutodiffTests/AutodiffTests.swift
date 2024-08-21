@@ -237,6 +237,54 @@ final class AutodiffTests: XCTestCase {
         XCTAssertEqual(Tensor(oneHot: 3, count: 5).data, [0, 0, 0, 1, 0])
         XCTAssertEqual(Tensor(oneHot: [3, 1], count: 5).data, [0, 0, 0, 1, 0, 0, 1, 0, 0, 0])
     }
+
+    func testTrainable() throws {
+        class Linear: Trainable {
+            @Parameter(name: "weight") var weight: Tensor
+            @Parameter(name: "bias") var bias: Tensor
+
+            init(inSize: Int, outSize: Int) {
+                super.init()
+                weight = Tensor(zeros: [inSize, outSize])
+                bias = Tensor(zeros: [outSize])
+            }
+        }
+
+        class Network: Trainable {
+            @Child(name: "layer0") var layer0: Linear
+            @Child(name: "layer1") var layer1: Linear
+
+            override init() {
+                super.init()
+                layer0 = Linear(inSize: 3, outSize: 5)
+                layer1 = Linear(inSize: 5, outSize: 7)
+            }
+        }
+
+        let instance = Linear(inSize: 3, outSize: 5)
+        let params = instance.parameters
+        XCTAssertEqual(params.count, 2)
+        XCTAssertEqual(params[0].0, "bias")
+        XCTAssertEqual(params[0].1.data!.shape, [5])
+        XCTAssertEqual(params[1].0, "weight")
+        XCTAssertEqual(params[1].1.data!.shape, [3, 5])
+        XCTAssert(instance.$bias.data != nil)
+        XCTAssert(instance.$weight.data != nil)
+        XCTAssertEqual(instance.bias.shape, [5])
+        XCTAssertEqual(instance.weight.shape, [3, 5])
+
+        let net = Network()
+        let netParams = net.parameters
+        XCTAssertEqual(netParams.count, 4)
+        XCTAssertEqual(netParams[0].0, "layer0.bias")
+        XCTAssertEqual(netParams[0].1.data!.shape, [5])
+        XCTAssertEqual(netParams[1].0, "layer0.weight")
+        XCTAssertEqual(netParams[1].1.data!.shape, [3, 5])
+        XCTAssertEqual(netParams[2].0, "layer1.bias")
+        XCTAssertEqual(netParams[2].1.data!.shape, [7])
+        XCTAssertEqual(netParams[3].0, "layer1.weight")
+        XCTAssertEqual(netParams[3].1.data!.shape, [5, 7])
+    }
 }
 
 func assertClose(_ x: Tensor, _ y: Tensor, atol: Float = 1e-4, rtol: Float = 1e-4) throws {
