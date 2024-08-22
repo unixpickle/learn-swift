@@ -158,7 +158,25 @@ final class Tensor {
         return rhs * lhs
     }
 
-    func backward(grad: Tensor) {
+    static func / (lhs: Tensor, rhs: Tensor) -> Tensor {
+        return lhs * rhs.pow(-1)
+    }
+
+    static func / (lhs: Float, rhs: Tensor) -> Tensor {
+        return lhs * rhs.pow(-1)
+    }
+
+    static func / (lhs: Tensor, rhs: Float) -> Tensor {
+        return lhs * (1 / rhs)
+    }
+
+    func backward(grad: Tensor? = nil) {
+        let grad = if let grad = grad {
+            grad
+        } else {
+            Tensor(onesLike: self)
+        }
+
         assert(numBackwardHandles == 0, "cannot call backward() on tensor that is used elsewhere")
         self.saveForBackward().backward(grad: grad)
     }

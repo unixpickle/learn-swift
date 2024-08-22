@@ -285,6 +285,35 @@ final class AutodiffTests: XCTestCase {
         XCTAssertEqual(netParams[3].0, "layer1.weight")
         XCTAssertEqual(netParams[3].1.data!.shape, [5, 7])
     }
+
+    func testAdam() throws {
+        class Linear: Trainable {
+            @Parameter(name: "weight") var weight: Tensor
+            @Parameter(name: "bias") var bias: Tensor
+
+            override init() {
+                super.init()
+                weight = Tensor(zeros: [])
+                bias = Tensor(zeros: [])
+            }
+
+            func forward(_ x: Tensor) -> Tensor {
+                return weight.expand(as: x) * x + bias.expand(as: x)
+            }
+        }
+        let model = Linear()
+        let opt = Adam(model.parameters, lr: 0.025)
+        let inputs = Tensor(data: [-2, -1, 0, 1, 2, 3, 4, 5], shape: [2, 4])
+        let outputs = inputs*3.142 + 2.718
+        for _ in 0..<1000 {
+            let loss = (model.forward(inputs) - outputs).pow(2).sum()
+            loss.backward()
+            opt.step()
+            opt.clearGrads()
+        }
+        XCTAssert(abs(model.weight.data[0] - 3.142) < 0.05, "model.weight.data[0]=\(model.weight.data[0])")
+        XCTAssert(abs(model.bias.data[0] - 2.718) < 0.05, "model.bias.data[0]=\(model.bias.data[0])")
+    }
 }
 
 func assertClose(_ x: Tensor, _ y: Tensor, atol: Float = 1e-4, rtol: Float = 1e-4) throws {
