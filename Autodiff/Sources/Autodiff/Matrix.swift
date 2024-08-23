@@ -1,4 +1,5 @@
-extension Tensor {
+public extension Tensor {
+
     func transpose() -> Tensor {
         assert(shape.count == 2, "can only transpose two-dimensional tensors")
         let newShape = [shape[1], shape[0]]
@@ -26,7 +27,7 @@ extension Tensor {
 
 }
 
-func tensorMatmul(_ lhs: Tensor, _ rhs: Tensor) -> Tensor {
+private func tensorMatmul(_ lhs: Tensor, _ rhs: Tensor) -> Tensor {
     assert(
         lhs.shape.count == 2 && rhs.shape.count == 2,
         "matrices must be two-dimensional: lhs.shape=\(lhs.shape) rhs.shape=\(rhs.shape)"

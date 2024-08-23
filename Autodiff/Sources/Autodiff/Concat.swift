@@ -1,4 +1,4 @@
-extension Tensor {
+public extension Tensor {
 
     convenience init(concat tensors: [Tensor], axis: Int = 0) {
         assert(!tensors.isEmpty, "cannot concatenate zero tensors")

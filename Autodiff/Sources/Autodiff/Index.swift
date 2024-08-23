@@ -1,4 +1,4 @@
-protocol TensorIndex {
+public protocol TensorIndex {
     var minTensorSliceDims: Int { get }
 
     func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int])
@@ -14,18 +14,18 @@ extension Sequence where Element: Numeric {
     }
 }
 
-func allIndices<S: Sequence>(forShape inShape: S) -> [Int] where S.Element == Int {
+private func allIndices<S: Sequence>(forShape inShape: S) -> [Int] where S.Element == Int {
     Array(0..<inShape.product())
 }
 
-func allIndices(forShape inShape: [Int]) -> [Int] {
+private func allIndices(forShape inShape: [Int]) -> [Int] {
     Array(0..<inShape.product())
 }
 
 extension Int: TensorIndex {
-    var minTensorSliceDims: Int { 1 }
+    public var minTensorSliceDims: Int { 1 }
 
-    func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
+    public func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
         assert(inShape.count > 0)
         let idx = self < 0 ? inShape[0] + self : self
         assert(idx >= 0 && idx < inShape[0], "index \(self) out of range for size \(inShape[0])")
@@ -36,9 +36,9 @@ extension Int: TensorIndex {
 }
 
 extension Range<Int>: TensorIndex {
-    var minTensorSliceDims: Int { 1 }
+    public var minTensorSliceDims: Int { 1 }
 
-    func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
+    public func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
         assert(inShape.count > 0)
         let start = self.lowerBound < 0 ? inShape[0] + self.lowerBound : self.lowerBound
         let end = self.upperBound < 0 ? inShape[0] + self.upperBound : self.upperBound
@@ -60,56 +60,56 @@ extension Range<Int>: TensorIndex {
 }
 
 extension ClosedRange<Int>: TensorIndex {
-    var minTensorSliceDims: Int { 1 }
+    public var minTensorSliceDims: Int { 1 }
 
-    func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
+    public func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
         assert(inShape.count > 0)
         let end = 1 + (self.upperBound < 0 ? inShape[0] + self.upperBound : self.upperBound)
         return (self.lowerBound..<end).tensorSliceIndices(forShape: inShape)
     }
 }
 
-struct FullRange: TensorIndex {
+public struct FullRange: TensorIndex {
     let dims: Int
 
     init(dims: Int = 1) {
         self.dims = dims
     }
 
-    var minTensorSliceDims: Int { dims }
+    public var minTensorSliceDims: Int { dims }
 
-    func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
+    public func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
         return (allIndices(forShape: inShape), inShape)
     }
 }
 
-struct NewAxis: TensorIndex {
+public struct NewAxis: TensorIndex {
     let count: Int
 
     init(count: Int = 1) {
         self.count = count
     }
 
-    var minTensorSliceDims: Int { 0 }
+    public var minTensorSliceDims: Int { 0 }
 
-    func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
+    public func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
         return (allIndices(forShape: inShape), Array(repeating: 1, count: count) + inShape)
     }
 }
 
 extension PartialRangeFrom<Int>: TensorIndex {
-    var minTensorSliceDims: Int { 1 }
+    public var minTensorSliceDims: Int { 1 }
 
-    func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
+    public func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
         assert(inShape.count > 0)
         return (self.lowerBound..<inShape[0]).tensorSliceIndices(forShape: inShape)
     }
 }
 
 extension PartialRangeUpTo<Int>: TensorIndex {
-    var minTensorSliceDims: Int { 1 }
+    public var minTensorSliceDims: Int { 1 }
 
-    func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
+    public func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
         assert(inShape.count > 0)
         let end = (self.upperBound > 0 ? self.upperBound : self.upperBound + inShape[0])
         assert(
@@ -121,9 +121,9 @@ extension PartialRangeUpTo<Int>: TensorIndex {
 }
 
 extension PartialRangeThrough<Int>: TensorIndex {
-    var minTensorSliceDims: Int { 1 }
+    public var minTensorSliceDims: Int { 1 }
 
-    func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
+    public func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
         assert(inShape.count > 0)
         let end = (self.upperBound > 0 ? self.upperBound : self.upperBound + inShape[0])
         assert(
@@ -135,9 +135,9 @@ extension PartialRangeThrough<Int>: TensorIndex {
 }
 
 extension Array: TensorIndex where Element == any TensorIndex {
-    var minTensorSliceDims: Int { self.map({ $0.minTensorSliceDims }).sum() }
+    public var minTensorSliceDims: Int { self.map({ $0.minTensorSliceDims }).sum() }
 
-    func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
+    public func tensorSliceIndices(forShape inShape: [Int]) -> ([Int], [Int]) {
         assert(inShape.count >= self.minTensorSliceDims)
         let a = Array(self)
         switch a.count {

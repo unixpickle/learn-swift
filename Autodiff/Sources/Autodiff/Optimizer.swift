@@ -1,26 +1,26 @@
 import Foundation
 
-class Optimizer {
-    typealias Parameter = Trainable.Parameter
+open class Optimizer {
+    public typealias Parameter = Trainable.Parameter
 
-    let parameters: [String: Parameter]
+    public let parameters: [String: Parameter]
 
-    init(_ parameters: [(String, Parameter)]) {
+    public init(_ parameters: [(String, Parameter)]) {
         self.parameters = [String: Parameter](uniqueKeysWithValues: parameters)
     }
 
-    func clearGrads() {
+    public func clearGrads() {
         for p in self.parameters.values {
             p.grad = nil
         }
     }
 
-    func step() {
+    open func step() {
         preconditionFailure("Method not implemented")
     }
 }
 
-class Adam: Optimizer {
+public class Adam: Optimizer {
     public var lr: Float
     public var beta1: Float
     public var beta2: Float
@@ -30,7 +30,7 @@ class Adam: Optimizer {
     public var moment1: [String: Tensor] = [:]
     public var moment2: [String: Tensor] = [:]
 
-    init(_ parameters: [(String, Parameter)], lr: Float, beta1: Float = 0.9, beta2: Float = 0.999, eps: Float = 1e-8) {
+    public init(_ parameters: [(String, Parameter)], lr: Float, beta1: Float = 0.9, beta2: Float = 0.999, eps: Float = 1e-8) {
         self.lr = lr
         self.beta1 = beta1
         self.beta2 = beta2
@@ -38,7 +38,7 @@ class Adam: Optimizer {
         super.init(parameters)
     }
 
-    override func step() {
+    override public func step() {
         for (name, param) in parameters {
             guard let grad = param.grad else {
                 continue

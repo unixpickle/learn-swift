@@ -1,4 +1,5 @@
-extension Tensor {
+public extension Tensor {
+
     func sum(axis: Int? = nil, keepdims: Bool = false) -> Tensor {
         if let axis = axis {
             let trueAxis = (axis < 0 ? axis + shape.count : axis)
@@ -100,5 +101,6 @@ extension Tensor {
                 return out
             }
         }
-    }   
+    }
+
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-extension Tensor {
+public extension Tensor {
     func elemwise(_ f: (Float) -> Float, fgrad: ((Float) -> Float)? = nil) -> Tensor {
         let newData = Array(data.map(f))
         if !needsGrad {

@@ -1,7 +1,33 @@
-final class Tensor {
-    let data: [Float]
-    let shape: [Int]
-    let needsGrad: Bool
+public final class Tensor {
+
+    public final class BackwardHandle {
+        private var addGrad: ((Tensor?) -> Void)?
+
+        init() {
+            self.addGrad = {_ in ()}
+        }
+
+        init(addGrad: @escaping (Tensor?) -> Void) {
+            self.addGrad = addGrad
+        }
+
+        public func backward(grad: Tensor) {
+            assert(!grad.needsGrad, "second-order gradients are not supported")
+            assert(self.addGrad != nil, "cannot re-use backward handle")
+            self.addGrad!(grad)
+            self.addGrad = nil
+        }
+
+        deinit {
+            if let addGrad = addGrad {
+                addGrad(nil)
+            }
+        }
+    }
+
+    public let data: [Float]
+    public let shape: [Int]
+    public let needsGrad: Bool
 
     private var backwardImpl: ((Tensor) -> Void)?
 
@@ -9,7 +35,7 @@ final class Tensor {
     private var curGrad: Tensor? = nil
     private var numBackwardHandles: Int = 0
 
-    init(data: [Float], shape: [Int], backwardImpl: ((Tensor) -> Void)? = nil) {
+    public init(data: [Float], shape: [Int], backwardImpl: ((Tensor) -> Void)? = nil) {
         assert(
             data.count == shape.product(),
             "data of size \(data.count) incompatible with shape \(shape)"
@@ -20,37 +46,37 @@ final class Tensor {
         self.needsGrad = backwardImpl != nil
     }
 
-    convenience init(zerosLike: Tensor) {
+    public convenience init(zerosLike: Tensor) {
         self.init(constant: 0, like: zerosLike)
     }
 
-    convenience init(onesLike: Tensor) {
+    public convenience init(onesLike: Tensor) {
         self.init(constant: 1, like: onesLike)
     }
 
-    convenience init(zeros shape: [Int]) {
+    public convenience init(zeros shape: [Int]) {
         self.init(constant: 0, shape: shape)
     }
 
-    convenience init(ones shape: [Int]) {
+    public convenience init(ones shape: [Int]) {
         self.init(constant: 1, shape: shape)
     }
 
-    convenience init(constant: Float, like: Tensor) {
+    public convenience init(constant: Float, like: Tensor) {
         self.init(constant: constant, shape: like.shape)
     }
 
-    init(constant: Float, shape: [Int]) {
+    public init(constant: Float, shape: [Int]) {
         self.data = Array(repeating: constant, count: shape.product())
         self.shape = shape
         self.needsGrad = false
     }
 
-    func noGrad() -> Tensor {
+    public func noGrad() -> Tensor {
         return Tensor(data: data, shape: shape)
     }
 
-    func onGrad(_ action: @escaping (Tensor) -> Void) -> Tensor {
+    public func onGrad(_ action: @escaping (Tensor) -> Void) -> Tensor {
         if !needsGrad {
             return Tensor(data: data, shape: shape, backwardImpl: action)
         }
@@ -61,7 +87,7 @@ final class Tensor {
         }
     }
 
-    func reshape(_ newShape: [Int]) -> Tensor {
+    public func reshape(_ newShape: [Int]) -> Tensor {
         if shape == newShape {
             return self
         }
@@ -76,7 +102,7 @@ final class Tensor {
         }
     }
 
-    static func * (lhs: Tensor, rhs: Float) -> Tensor {
+    public static func * (lhs: Tensor, rhs: Float) -> Tensor {
         let newData = Array(lhs.data.map({x in x * rhs}))
         if !lhs.needsGrad {
             return Tensor(data: newData, shape: lhs.shape)
@@ -88,7 +114,7 @@ final class Tensor {
         }
     }
 
-    static func + (lhs: Tensor, rhs: Float) -> Tensor {
+    public static func + (lhs: Tensor, rhs: Float) -> Tensor {
         let newData = Array(lhs.data.map({x in x + rhs}))
         if !lhs.needsGrad {
             return Tensor(data: newData, shape: lhs.shape)
@@ -98,7 +124,7 @@ final class Tensor {
         }
     }
 
-    static func + (lhs: Tensor, rhs: Tensor) -> Tensor {
+    public static func + (lhs: Tensor, rhs: Tensor) -> Tensor {
         assert(
             lhs.shape == rhs.shape,
             "shape mismatch for + operator: lhs=\(lhs.shape) rhs=\(rhs.shape)"
@@ -116,7 +142,7 @@ final class Tensor {
         }
     }
 
-    static func * (lhs: Tensor, rhs: Tensor) -> Tensor {
+    public static func * (lhs: Tensor, rhs: Tensor) -> Tensor {
         assert(
             lhs.shape == rhs.shape,
             "shape mismatch for * operator: lhs=\(lhs.shape) rhs=\(rhs.shape)"
@@ -134,43 +160,43 @@ final class Tensor {
         }
     }
 
-    static func - (lhs: Tensor, rhs: Tensor) -> Tensor {
+    public static func - (lhs: Tensor, rhs: Tensor) -> Tensor {
         return lhs + -1*rhs
     }
 
-    static func - (lhs: Tensor, rhs: Float) -> Tensor {
+    public static func - (lhs: Tensor, rhs: Float) -> Tensor {
         return lhs + -rhs
     }
 
-    prefix static func - (t: Tensor) -> Tensor {
+    prefix public static func - (t: Tensor) -> Tensor {
         return t * -1
     }
 
-    static func - (lhs: Float, rhs: Tensor) -> Tensor {
+    public static func - (lhs: Float, rhs: Tensor) -> Tensor {
         return lhs + -rhs
     }
 
-    static func + (lhs: Float, rhs: Tensor) -> Tensor {
+    public static func + (lhs: Float, rhs: Tensor) -> Tensor {
         return rhs + lhs
     }
 
-    static func * (lhs: Float, rhs: Tensor) -> Tensor {
+    public static func * (lhs: Float, rhs: Tensor) -> Tensor {
         return rhs * lhs
     }
 
-    static func / (lhs: Tensor, rhs: Tensor) -> Tensor {
+    public static func / (lhs: Tensor, rhs: Tensor) -> Tensor {
         return lhs * rhs.pow(-1)
     }
 
-    static func / (lhs: Float, rhs: Tensor) -> Tensor {
+    public static func / (lhs: Float, rhs: Tensor) -> Tensor {
         return lhs * rhs.pow(-1)
     }
 
-    static func / (lhs: Tensor, rhs: Float) -> Tensor {
+    public static func / (lhs: Tensor, rhs: Float) -> Tensor {
         return lhs * (1 / rhs)
     }
 
-    func backward(grad: Tensor? = nil) {
+    public func backward(grad: Tensor? = nil) {
         let grad = if let grad = grad {
             grad
         } else {
@@ -181,13 +207,13 @@ final class Tensor {
         self.saveForBackward().backward(grad: grad)
     }
 
-    func saveForBackward() -> TensorBackwardHandle {
+    public func saveForBackward() -> BackwardHandle {
         if !self.needsGrad {
-            return TensorBackwardHandle()
+            return BackwardHandle()
         }
         assert(self.backwardImpl != nil, "cannot backward a second time")
         numBackwardHandles += 1
-        return TensorBackwardHandle(addGrad: { [self] grad in
+        return BackwardHandle(addGrad: { [self] grad in
             assert(numBackwardHandles > 0)
             if let grad = grad {
                 assert(
@@ -213,29 +239,5 @@ final class Tensor {
             }
         })
     }
-}
 
-final class TensorBackwardHandle {
-    private var addGrad: ((Tensor?) -> Void)?
-
-    init() {
-        self.addGrad = {_ in ()}
-    }
-
-    init(addGrad: @escaping (Tensor?) -> Void) {
-        self.addGrad = addGrad
-    }
-
-    func backward(grad: Tensor) {
-        assert(!grad.needsGrad, "second-order gradients are not supported")
-        assert(self.addGrad != nil, "cannot re-use backward handle")
-        self.addGrad!(grad)
-        self.addGrad = nil
-    }
-
-    deinit {
-        if let addGrad = addGrad {
-            addGrad(nil)
-        }
-    }
 }

@@ -1,4 +1,4 @@
-extension Tensor {
+public extension Tensor {
 
     convenience init(oneHot: Int, count: Int) {
         assert(oneHot >= 0 && oneHot < count, "oneHot \(oneHot) out of range [0, \(count))")

@@ -1,8 +1,8 @@
-class Trainable {
+open class Trainable {
 
     @propertyWrapper
-    final class Parameter {
-        static subscript<T: Trainable>(
+    public final class Parameter {
+        public static subscript<T: Trainable>(
             _enclosingInstance instance: T,
             wrapped wrappedKeyPath: ReferenceWritableKeyPath<T, Tensor>,
             storage storageKeyPath: ReferenceWritableKeyPath<T, Parameter>
@@ -28,16 +28,16 @@ class Trainable {
         @available(*, unavailable,
             message: "@Parameter can only be applied to classes"
         )
-        var wrappedValue: Tensor {
+        public var wrappedValue: Tensor {
             get { fatalError() }
             set { fatalError() }
         }
 
-        let name: String
-        var data: Tensor?
-        var grad: Tensor?
+        public let name: String
+        public var data: Tensor?
+        public var grad: Tensor?
 
-        var projectedValue: Parameter { self }
+        public var projectedValue: Parameter { self }
 
         init(name: String) {
             self.name = name
@@ -45,8 +45,8 @@ class Trainable {
     }
 
     @propertyWrapper
-    final class Child<Value: Trainable> {
-        static subscript<T: Trainable>(
+    public final class Child<Value: Trainable> {
+        public static subscript<T: Trainable>(
             _enclosingInstance instance: T,
             wrapped wrappedKeyPath: ReferenceWritableKeyPath<T, Value>,
             storage storageKeyPath: ReferenceWritableKeyPath<T, Child>
@@ -64,7 +64,7 @@ class Trainable {
         @available(*, unavailable,
             message: "@Child can only be applied to classes"
         )
-        var wrappedValue: Value {
+        public var wrappedValue: Value {
             get { fatalError() }
             set { fatalError() }
         }
@@ -92,10 +92,10 @@ class Trainable {
 
 }
 
-class TrainableArray<T: Trainable>: Trainable {
-    let children: [Trainable]
+public class TrainableArray<T: Trainable>: Trainable {
+    public let children: [Trainable]
 
-    init(_ children: [T]) {
+    public init(_ children: [T]) {
         self.children = children
         super.init()
         for (i, ch) in children.enumerated() {

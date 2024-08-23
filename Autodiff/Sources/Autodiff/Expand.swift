@@ -1,4 +1,4 @@
-extension Tensor {
+public extension Tensor {
 
     func expand(as asTensor: Tensor) -> Tensor {
         expand(shape: asTensor.shape)

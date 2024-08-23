@@ -1,4 +1,4 @@
-extension Tensor {
+public extension Tensor {
 
     func logSoftmax(axis: Int = -1) -> Tensor {
         let maxes = self.max(axis: axis, keepdims: true).expand(as: self)
