@@ -54,7 +54,7 @@ public struct MNISTDataset {
 
     public static func download(toDir: String) async throws -> MNISTDataset {
         let baseOutURL = URL.init(fileURLWithPath: toDir).standardizedFileURL
-        
+
         try FileManager.default.createDirectory(atPath: toDir, withIntermediateDirectories: true)
         for (filename, hash) in resources {
             let path = baseOutURL.appendingPathComponent(filename)

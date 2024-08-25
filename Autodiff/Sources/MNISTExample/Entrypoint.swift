@@ -3,8 +3,8 @@ import Autodiff
 import MNIST
 
 class Linear: Trainable {
-    @Parameter(name: "weight") var weight: Tensor
-    @Parameter(name: "bias") var bias: Tensor
+    @Parameter var weight: Tensor
+    @Parameter var bias: Tensor
 
     init(inSize: Int, outSize: Int) {
         super.init()
@@ -19,9 +19,9 @@ class Linear: Trainable {
 }
 
 class Model: Trainable {
-    @Child(name: "layer1") var layer1: Linear
-    @Child(name: "layer2") var layer2: Linear
-    @Child(name: "layer3") var layer3: Linear
+    @Child var layer1: Linear
+    @Child var layer2: Linear
+    @Child var layer3: Linear
 
     override init() {
         super.init()

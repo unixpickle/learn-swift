@@ -20,8 +20,11 @@ open class Trainable {
             }
             set {
                 let param = instance[keyPath: storageKeyPath]
+                if param.name == nil {
+                    param.name = String("\(storageKeyPath)".split(separator: ".").last!)
+                }
                 param.data = newValue
-                instance.registeredParams[param.name] = param
+                instance.registeredParams[param.name!] = param
             }
         }
 
@@ -33,13 +36,13 @@ open class Trainable {
             set { fatalError() }
         }
 
-        public let name: String
+        var name: String? = nil
         public var data: Tensor?
         public var grad: Tensor?
 
         public var projectedValue: Parameter { self }
 
-        public init(name: String) {
+        public init(name: String? = nil) {
             self.name = name
         }
     }
@@ -56,8 +59,11 @@ open class Trainable {
             }
             set {
                 let child = instance[keyPath: storageKeyPath]
+                if child.name == nil {
+                    child.name = String("\(storageKeyPath)".split(separator: ".").last!)
+                }
                 child.value = newValue
-                instance.registeredChildren[child.name] = newValue
+                instance.registeredChildren[child.name!] = newValue
             }
         }
 
@@ -69,10 +75,10 @@ open class Trainable {
             set { fatalError() }
         }
 
-        let name: String
+        var name: String? = nil
         private var value: Value?
 
-        public init(name: String) {
+        public init(name: String? = nil) {
             self.name = name
         }
     }
