@@ -14,8 +14,8 @@ public struct MNISTDataset {
     }
 
     public struct Image {
-        var pixels: [UInt8]
-        var label: Int
+        public let pixels: [UInt8]
+        public let label: Int
     }
 
     public let train: [Image]
@@ -53,9 +53,14 @@ public struct MNISTDataset {
     }
 
     public static func download(toDir: String) async throws -> MNISTDataset {
-        let baseOutURL = URL.init(fileURLWithPath: toDir)
+        let baseOutURL = URL.init(fileURLWithPath: toDir).standardizedFileURL
+        
         try FileManager.default.createDirectory(atPath: toDir, withIntermediateDirectories: true)
         for (filename, hash) in resources {
+            let path = baseOutURL.appendingPathComponent(filename)
+            if FileManager.default.fileExists(atPath: path.path) {
+                continue
+            }
             let request = HTTPClientRequest(url: "\(downloadURL)\(filename)")
             let response = try await HTTPClient.shared.execute(request, timeout: .seconds(30))
             let body = try await response.body.collect(upTo: 1 << 27)
@@ -66,10 +71,7 @@ public struct MNISTDataset {
             if hexDigest != hash {
                 throw MNISTError.incorrectHash("file \(filename) should have hash \(hash) but got \(hexDigest)")
             }
-            let path = baseOutURL.appendingPathComponent(filename)
-            let fh = try FileHandle.init(forWritingTo: path)
-            try fh.write(contentsOf: data)
-            try fh.close()
+            try Data(data).write(to: path)
         }
         return try MNISTDataset(fromDir: toDir)
     }
@@ -128,12 +130,13 @@ public struct MNISTDataset {
         }
 
         func read(_ size: Int) throws -> Data {
-            if buffer.count - offset < size {
+            if offset+size > buffer.count {
                 throw MNISTError.unexpectedEOF
             }
             let result = buffer[offset..<(offset + size)]
             offset += size
-            return result
+            // Copy the data to make indices behave normally.
+            return Data(result)
         }
     }
 

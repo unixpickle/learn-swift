@@ -13,6 +13,9 @@ let package = Package(
         .library(
             name: "MNIST",
             targets: ["MNIST"]),
+        .executable(
+            name: "MNISTExample",
+            targets: ["MNISTExample"]),
     ],
     dependencies: [
         .package(url: "https://github.com/1024jp/GzipSwift", "6.0.0" ..< "6.1.0"),
@@ -32,5 +35,8 @@ let package = Package(
                 .product(name: "Gzip", package: "GzipSwift"),
                 .product(name: "Crypto", package: "swift-crypto"),
             ]),
+        .executableTarget(
+            name: "MNISTExample",
+            dependencies: ["MNIST", "Autodiff"]),
     ]
 )

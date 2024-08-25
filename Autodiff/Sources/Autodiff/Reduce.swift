@@ -47,6 +47,12 @@ public extension Tensor {
         }
     }
 
+    func mean(axis: Int? = nil, keepdims: Bool = false) -> Tensor {
+        let unscaled = sum(axis: axis, keepdims: keepdims)
+        let ratio = Float(unscaled.shape.product()) / Float(shape.product())
+        return unscaled * ratio
+    }
+
     func min(axis: Int? = nil, keepdims: Bool = false) -> Tensor {
         return maxOrMin(isMax: false, axis: axis, keepdims: keepdims)
     }

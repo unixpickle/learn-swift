@@ -39,7 +39,7 @@ open class Trainable {
 
         public var projectedValue: Parameter { self }
 
-        init(name: String) {
+        public init(name: String) {
             self.name = name
         }
     }
@@ -72,13 +72,16 @@ open class Trainable {
         let name: String
         private var value: Value?
 
-        init(name: String) {
+        public init(name: String) {
             self.name = name
         }
     }
 
     internal var registeredParams = [String: Parameter]()
     internal var registeredChildren = [String: Trainable]()
+
+    public init() {
+    }
 
     public var parameters: [(String, Parameter)] {
         var results = Array(registeredParams)

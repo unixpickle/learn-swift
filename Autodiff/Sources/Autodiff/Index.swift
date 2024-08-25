@@ -161,7 +161,7 @@ extension Array: TensorIndex where Element == any TensorIndex {
     }
 }
 
-extension Tensor {
+public extension Tensor {
     func scatter(outShape: [Int], dstIndices: [Int]) -> Tensor {
         assert(dstIndices.count == data.count)
         var newData: [Float] = Array(repeating: 0, count: outShape.product())

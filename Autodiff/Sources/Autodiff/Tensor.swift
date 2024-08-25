@@ -72,6 +72,11 @@ public final class Tensor {
         self.needsGrad = false
     }
 
+    public func item() -> Float {
+        assert(data.count == 1, "cannot call item() on Tensor of shape \(shape)")
+        return data[0]
+    }
+
     public func noGrad() -> Tensor {
         return Tensor(data: data, shape: shape)
     }
@@ -227,7 +232,7 @@ public final class Tensor {
                 }
             }
             numBackwardHandles -= 1
-            if numBackwardHandles == 0 {
+            if numBackwardHandles == 0 && curGrad != nil {
                 let bwd = backwardImpl!
                 backwardImpl = nil
                 if let grad = curGrad {

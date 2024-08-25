@@ -52,8 +52,12 @@ public extension Tensor {
             return Tensor(data: newData, shape: newShape)
         } else {
             let handle = self.saveForBackward()
+            let intermediateShape = Array(
+                shape[..<trueAxis] + [count, shape[trueAxis]] + shape[(trueAxis+1)...]
+            )
             return Tensor(data: newData, shape: newShape) { grad in
-                handle.backward(grad: grad.sum(axis: trueAxis, keepdims: true))
+                assert(grad.shape == newShape, "repeating() grad received incorrect shape")
+                handle.backward(grad: grad.reshape(intermediateShape).sum(axis: trueAxis))
             }
         }
     }
