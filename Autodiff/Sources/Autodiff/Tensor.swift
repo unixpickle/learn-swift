@@ -201,6 +201,22 @@ public final class Tensor {
         return lhs * (1 / rhs)
     }
 
+    public static func == (lhs: Tensor, rhs: Float) -> Tensor {
+        return Tensor(data: Array(lhs.data.map { x in x == rhs ? 1.0 : 0.0 }), shape: lhs.shape)
+    }
+
+    public static func == (lhs: Float, rhs: Tensor) -> Tensor {
+        return rhs == lhs
+    }
+
+    public static func == (lhs: Tensor, rhs: Tensor) -> Tensor {
+        assert(lhs.shape == rhs.shape, "incompatible operands for ==: \(lhs.shape) != \(rhs.shape)")
+        return Tensor(
+            data: Array(zip(lhs.data, rhs.data).map { (x, y) in x == y ? 1.0 : 0.0}),
+            shape: lhs.shape
+        )
+    }
+
     public func backward(grad: Tensor? = nil) {
         let grad = if let grad = grad {
             grad

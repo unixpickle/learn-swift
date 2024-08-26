@@ -75,6 +75,13 @@ final class AutodiffTests: XCTestCase {
         XCTAssertEqual(yGrad!.data, [0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3])
     }
 
+    func testEquality() throws {
+        let t1 = Tensor(data: [1, 2, 3, 4, 3, 1, 2, 0], shape: [2, 4])
+        let t2 = Tensor(data: [1, 0, 4, 4, 0, 0, 1, 0], shape: [2, 4])
+        XCTAssertEqual((t1 == 2).data, [0, 1, 0, 0, 0, 0, 1, 0])
+        XCTAssertEqual((t1 == t2).data, [1, 0, 0, 1, 0, 0, 0, 1])
+    }
+
     func testElemwise() throws {
         func testF(input: [Float], output: [Float], grad: [Float], _ op: (Tensor) -> Tensor) throws {
             var actualGrad: Tensor?

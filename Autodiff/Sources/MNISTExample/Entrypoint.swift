@@ -88,15 +88,10 @@ struct Main {
             let (inputs, targets) = inputsAndTargets
             let output = model(inputs)
 
-            var correct: Float = 0
-            for i in 0..<output.shape[0] {
-                let logits = output[i].data
-                let maxIdx = logits.firstIndex(of: logits.max()!)!
-                if targets[i, maxIdx].item() != 0 {
-                    correct += 1
-                }
-            }
-            let acc = correct / Float(output.shape[0])
+            // Compute accuracy where we evenly distribute out ties.
+            var maskMax = output == (output.max(axis: -1, keepdims: true).expand(as: output))
+            maskMax = maskMax / maskMax.sum(axis: -1, keepdims: true).expand(as: maskMax)
+            let acc = (maskMax * targets).sum(axis: -1).mean().item()
 
             return (-(output * targets).sum(axis: 1).mean(), acc)
         }
