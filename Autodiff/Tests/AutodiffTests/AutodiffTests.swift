@@ -12,6 +12,14 @@ final class AutodiffTests: XCTestCase {
         XCTAssertEqual(xGrad!.data, [-2, 4, 12])
     }
 
+    func testMatrixMatrixProduct() throws {
+        let x = Tensor(ones: [64, 128])
+        let y = Tensor(ones: [128, 32])
+        let z = x &* y
+        XCTAssertEqual(z.shape, [64, 32])
+        XCTAssert(z.data.map({ $0 == 128 }).reduce(true, { x, y in x && y }))
+    }
+
     func testMatrixVectorProduct() throws {
         let x = Tensor(data: [1, 2, 3, 4, 5, 6], shape: [2, 3])
         let y = Tensor(data: [-1, -3, 2], shape: [3, 1])
