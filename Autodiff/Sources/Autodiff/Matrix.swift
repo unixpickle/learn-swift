@@ -29,6 +29,45 @@ public extension Tensor {
         return tensorMatmul(lhs, rhs)
     }
 
+#if canImport(Accelerate)
+    func arrayDescriptor<T>(_ f: (BNNSNDArrayDescriptor) throws -> T) rethrows -> T {
+        assert(shape.count <= 8, "tensor shape must be 8 or less for BNNS")
+        let layout = switch shape.count {
+            case 0, 1: BNNSDataLayout1DFirstMajor
+            case 2: BNNSDataLayout2DFirstMajor
+            case 3: BNNSDataLayout3DFirstMajor
+            case 4: BNNSDataLayout4DFirstMajor
+            case 5: BNNSDataLayout5DFirstMajor
+            case 6: BNNSDataLayout6DFirstMajor
+            case 7: BNNSDataLayout7DFirstMajor
+            default: BNNSDataLayout8DFirstMajor
+        }
+        return try data.withUnsafeBufferPointer { buffer in
+            try f(BNNSNDArrayDescriptor(
+                flags: BNNSNDArrayFlags(0),
+                layout: layout,
+                size: (
+                    shape.count > 0 ? shape[0] : 1,
+                    shape.count > 1 ? shape[1] : 0,
+                    shape.count > 2 ? shape[2] : 0,
+                    shape.count > 3 ? shape[3] : 0,
+                    shape.count > 4 ? shape[4] : 0,
+                    shape.count > 5 ? shape[5] : 0,
+                    shape.count > 6 ? shape[6] : 0,
+                    shape.count > 7 ? shape[7] : 0
+                ),
+                stride: (0, 0, 0, 0, 0, 0, 0, 0),
+                data: UnsafeMutableRawPointer(mutating: buffer.baseAddress!),
+                data_type: .float,
+                table_data: nil,
+                table_data_type: .float,
+                data_scale: 1,
+                data_bias: 0
+            ))
+        }
+    }
+#endif
+
 }
 
 private func tensorMatmul(_ lhs: Tensor, _ rhs: Tensor) -> Tensor {
@@ -58,30 +97,10 @@ private func tensorMatmul(_ lhs: Tensor, _ rhs: Tensor) -> Tensor {
     }
 
 #if canImport(Accelerate)
-    func wrapMatrix(
-        _ data: Array<Float>,
-        _ shape: [Int],
-        _ f: (BNNSNDArrayDescriptor) -> Bool
-    ) -> Bool {
-        return data.withUnsafeBufferPointer { buffer in
-            let arr = BNNSNDArrayDescriptor(
-                flags: BNNSNDArrayFlags(0),
-                layout: BNNSDataLayout2DFirstMajor,
-                size: (shape[0], shape[1], 0, 0, 0, 0, 0, 0),
-                stride: (0, 0, 0, 0, 0, 0, 0, 0),
-                data: UnsafeMutableRawPointer(mutating: buffer.baseAddress!),
-                data_type: .float,
-                table_data: nil,
-                table_data_type: .float,
-                data_scale: 1,
-                data_bias: 0
-            )
-            return f(arr)
-        }
-    }
-    let success = wrapMatrix(lhs.data, lhs.shape) { lhsArray in
-        wrapMatrix(rhs.data, rhs.shape) { rhsArray in
-            wrapMatrix(data, shape) { outArray in
+    let success = lhs.arrayDescriptor { lhsArray in
+        rhs.arrayDescriptor { rhsArray in
+            let outTensor = Tensor(data: data, shape: shape)
+            let result = outTensor.arrayDescriptor { outArray in
                 do {
                     let size = BNNS.matrixMultiplicationWorkspaceSize(
                         inputA: lhsArray, transposed: false,
@@ -107,6 +126,11 @@ private func tensorMatmul(_ lhs: Tensor, _ rhs: Tensor) -> Tensor {
                 }
                 return true
             }
+
+            // Technically this isn't required because of CoW semantics
+            // being violated, but it's still nice to include.
+            data = outTensor.data
+            return result
         }
     }
     if !success {

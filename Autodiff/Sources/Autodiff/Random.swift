@@ -2,7 +2,7 @@ public extension Tensor {
 
     convenience init(uniform shape: [Int]) {
         self.init(
-            data: Array((0..<shape.product()).map { _ in Float.random(in: 0.0..<1.0) }),
+            data: Array((0..<shape.product()).map { _ in Float.random(in: 0..<1.0) }),
             shape: shape
         )
     }
@@ -13,7 +13,7 @@ public extension Tensor {
             count += 1
         } 
         count /= 2
-        let u1 = Tensor(uniform: [count])
+        let u1 = Tensor(uniform: [count]).elemwise { Swift.max(1e-5, $0) }
         let u2 = Tensor(uniform: [count])
         let r = (-2 * u1.log()).sqrt()
         let phi = 2 * Float.pi * u2
