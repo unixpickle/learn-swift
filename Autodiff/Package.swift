@@ -41,5 +41,8 @@ let package = Package(
         .executableTarget(
             name: "MNISTExample",
             dependencies: ["MNIST", "Autodiff"]),
+        .executableTarget(
+            name: "MatrixBench",
+            dependencies: ["Autodiff"]),
     ]
 )
